@@ -86,6 +86,7 @@ def quantizar(x, n_bits, v_min, v_max):
     return xq, delta
 
 # ---------------- Extração de frequência, amplitude e potência ----------------
+# Obs: Filtro de média móvel não causal (utiliza amostras futuras)
 def media_movel(R, w):
     # Cada ponto vira a média dele com os vizinhos (janela de w pontos).
     # Atenua o "serrilhado" do ruído sem deformar a cossenoide lenta.
@@ -110,10 +111,8 @@ def primeiro_lobulo(S):
     k_fim = k
     return k_ini, k_fim
 
-def analisar(R):
-    # tamanho da janela da media movel tambem deve ser atualizado ao plotar grafico lah embaixo.
-    # tamanho da janel = 5
-    S = media_movel(R, 5)
+def analisar(R, fs, janela = 5):
+    S = media_movel(R, janela)
     k_ini, k_fim = primeiro_lobulo(S)
     k_pico = (k_ini + k_fim) / 2           # centro do lóbulo = 1 período (amostras)
     periodo = k_pico / fs                  # s
@@ -239,7 +238,7 @@ R_teorico = (A1 ** 2 / 2) * np.cos(2 * np.pi * f1 * lags_comp / 1000)   # gabari
 
 for n_per in [4, 40, 400]:
     R_ = autocorrelacao(gerar_x(n_per), K_comp)
-    k_pico, freq, amp, Ps, Pn, snr = analisar(R_)
+    k_pico, freq, amp, Ps, Pn, snr = analisar(R_, fs)
     print(f"{n_per:4d} períodos -> pico em {k_pico:.1f} ms | f = {freq:.2f} Hz | "
           f"A = {amp:.3f} V ({2*amp:.2f} Vpp) | P_sinal = {Ps:.3f} V² | "
           f"P_ruido = {Pn:.3f} V² | SNR = {snr:.1f} dB")
@@ -347,7 +346,7 @@ R_400 = autocorrelacao(gerar_x(400), K_comp)
 # tamanho da janel = 5
 S_400 = media_movel(R_400, 5)
 k_ini, k_fim = primeiro_lobulo(S_400)
-k_pico, freq, amp, Ps, Pn, snr = analisar(R_400)
+k_pico, freq, amp, Ps, Pn, snr = analisar(R_400, fs)
  
 plt.figure(figsize=(10, 4))
 plt.plot(lags_comp, R_400, color="tab:green", alpha=0.4, label="R(k) de x")

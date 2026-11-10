@@ -117,7 +117,7 @@ S_cont10 = (np.sin(2 * np.pi * f1 * t_cont10) + np.sin(2 * np.pi * f2 * t_cont10
 freqs_fft = np.fft.rfftfreq(len(S), 1 / fs)
 
 
-# utiliza apenasos valores da serie, porem sem informação da frequência, por isso é necessário criar o vetor de frequências
+# utiliza apenas os valores da serie, porem sem informação da frequência, por isso é necessário criar o vetor de frequências
 # passo 
 amp_fft = np.abs(np.fft.rfft(S)) / (len(S) / 2)
 print(f"\n tamanho FFT:     {len(amp_fft)} amostras | resolução: {fs / len(S):.3f} Hz")
@@ -192,21 +192,27 @@ print(f"\nS: {len(S)} amostras | h: {len(h)} | y: {len(y)} amostras")
 n_ms = 10                                # mostra os primeiros 10 ms
 nS = int(n_ms / 1000 * fs)               # 80 amostras
 
-fig, axs = plt.subplots(3, 1, figsize=(10, 9), sharex=True, sharey=True)
+fig, axs = plt.subplots(3, 1, figsize=(10, 9))
 
-axs[0].plot(t[:nS] * 1000, S[:nS], "o-", markersize=3)
+axs[0].stem(t[:nS] * 1000, S[:nS])
 axs[0].set_title("a) Sinal original S")
 
 axs[1].stem(th * 1000, h)
 axs[1].set_title("b) Filtro FIR h (resposta ao impulso, 12 coeficientes = 1,5 ms)")
 
-axs[2].plot(ty[:nS] * 1000, y[:nS], "o-", markersize=3, color="tab:green")
+axs[2].stem(ty[:nS] * 1000, y[:nS], linefmt="tab:green", markerfmt="go", basefmt=" ")
 axs[2].set_title("c) Saída y = S * h")
 axs[2].set_xlabel("Tempo (ms)")
 
 for ax in axs:
     ax.set_ylabel("Amplitude")
     ax.grid(True, alpha=0.3)
+
+# O filtro ocupa apenas 1,375 ms entre a primeira e a última amostra.
+# Deixa cada painel com escala própria para aproveitar essa faixa e a amplitude de h.
+axs[0].set_xlim(0, n_ms)
+axs[1].set_xticks(np.append(th[::2] * 1000, th[-1] * 1000))
+axs[2].set_xlim(0, n_ms)
 
 # Marcações: períodos de 4 ms em S; transiente + períodos de 4 ms em y
 T_S = 4                                   # período de S (ms)

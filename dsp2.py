@@ -22,7 +22,7 @@ def convolucao(x, h):
 
 # ---------------- Sinal de entrada x(t) ----------------
 T = 1                          # período de amostragem
-t = np.arange(0, 32 + T, T)    # 0, 1, 2, ..., 32  (33 amostras)
+t = np.arange(0, (32 + 1) * T, T)    # 0, 1, 2, ..., 32  (33 amostras)
 x = np.exp(-0.5 * t)
 
 # ---------------- Resposta ao impulso h(t) ----------------
@@ -56,7 +56,7 @@ ax2.set_ylabel("h(t)")
 ax2.grid(True, alpha=0.3)
 
 ax3.stem(ty, y)
-ax3.set_title("Saída y(t) = x(t) * h(t)")
+ax3.set_title("Saída y(t) = x(t) ∗ h(t)")
 ax3.set_xlabel("t (amostras)")
 ax3.set_ylabel("y(t)")
 ax3.grid(True, alpha=0.3)
