@@ -1,137 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-def media(x):
-    # Soma todas as amostras e divide por N
-    N = len(x)
-    soma = 0.0
-    for amostra in x:
-        soma = soma + amostra
-    return soma / N
-
-def variancia(x):
-    # Média dos quadrados das distâncias até a média
-    N = len(x)
-    m = media(x)                 # reaproveita a função de cima
-    soma_quadrados = 0.0
-    for amostra in x:
-        soma_quadrados = soma_quadrados + (amostra - m) ** 2
-    return soma_quadrados / N
-
-def desvio_padrao(x):
-    # Raiz quadrada da variância
-    return variancia(x) ** 0.5
-
-def correlacao(a, b):
-    # Multiplica amostra por amostra e soma tudo
-    soma = 0.0
-    for n in range(len(a)):
-        soma = soma + a[n] * b[n]
-    return soma
-
-def autocorrelacao(x, K):
-    # Para cada atraso k, correlaciona o sinal com ele mesmo atrasado.
-    # Divide por N para o resultado ficar em V² (R[0] = potência média).
-    N = len(x)
-    R = np.zeros(K)
-    for k in range(K):
-        R[k] = correlacao(x, atrasar(x, k)) / (N - k)
-    return R
-
-# ---------------- Covariância ----------------
-# nao usado no exercicio
-def covariancia(a, b):
-    # Correlação dos sinais em relação à média, dividida por N
-    N = len(a)
-    ma = media(a)
-    mb = media(b)
-    soma = 0.0
-    for n in range(N):
-        soma = soma + (a[n] - ma) * (b[n] - mb)
-    return soma / N
-
-# ---------------- Coeficiente de correlação ----------------
-# nao usado no exercicio
-def coef_correlacao(a, b):
-    # Covariância normalizada pelos desvios padrão -> resultado entre -1 e +1
-    return covariancia(a, b) / (desvio_padrao(a) * desvio_padrao(b))
-
-# ---------------- Atraso de um sinal ----------------
-def atrasar(x, k):
-    # Desloca o sinal k amostras para a direita.
-    # As k primeiras posições ficam com zero e as k últimas
-    # amostras do original "saem" pelo fim -> mesmo tamanho.
-    N = len(x)
-    y = np.zeros(N)
-    #range(k, N) -> começa em k (em vez de 0) e vai até N-1
-    for n in range(k, N):
-        y[n] = x[n - k]
-    return y
-
-def quantizar(x, n_bits, v_min, v_max):
-    niveis = 2 ** n_bits                     # número de níveis possíveis
-    delta = (v_max - v_min) / (niveis - 1)   # passo de quantização (V)
-    xq = np.zeros(len(x))                    # vetor de saída
-    for i in range(len(x)):
-        v = x[i]
-        # 1) satura: valores fora da faixa ficam no limite
-        if v > v_max:
-            v = v_max
-        if v < v_min:
-            v = v_min
-        # 2) descobre o código digital (0, 1, 2, ..., niveis-1)
-        codigo = int((v - v_min) / delta + 0.5)   # +0.5 arredonda
-        # 3) converte o código de volta para tensão
-        xq[i] = v_min + codigo * delta
-    return xq, delta
-
-# ---------------- Extração de frequência, amplitude e potência ----------------
-# Obs: Filtro de média móvel não causal (utiliza amostras futuras)
-def media_movel(R, w):
-    # Cada ponto vira a média dele com os vizinhos (janela de w pontos).
-    # Atenua o "serrilhado" do ruído sem deformar a cossenoide lenta.
-    meio = w // 2
-    S = np.zeros(len(R))
-    for k in range(len(R)):
-        ini = max(0, k - meio)
-        fim = min(len(R), k + meio + 1)
-        S[k] = media(R[ini:fim])
-    return S
-
-def primeiro_lobulo(S):
-    # Encontra o 1º lóbulo positivo depois de k = 0 (o pico do 1º período)
-    k = 1
-    while S[k] > 0:          # 1) desce do pico de k = 0 até ficar negativo
-        k = k + 1
-    while S[k] <= 0:         # 2) atravessa o vale negativo
-        k = k + 1
-    k_ini = k                # 3) início do lóbulo positivo
-    while S[k] > 0:          # 4) percorre o lóbulo até voltar a ser negativo
-        k = k + 1
-    k_fim = k
-    return k_ini, k_fim
-
-def analisar(R, fs, janela = 5):
-    S = media_movel(R, janela)
-    k_ini, k_fim = primeiro_lobulo(S)
-    k_pico = (k_ini + k_fim) / 2           # centro do lóbulo = 1 período (amostras)
-    periodo = k_pico / fs                  # s
-    freq = 1 / periodo                     # Hz
-    P_sinal = max(S[k_ini:k_fim])          # altura do pico = A²/2  (V²)
-    amplitude = (2 * P_sinal) ** 0.5       # A = raiz(2·P)  (V)
-    P_total = R[0]                         # potência de x (senoide + ruído), sem suavizar
-    P_ruido = P_total - P_sinal
-    snr_db = 10 * np.log10(P_sinal / P_ruido)
-    return k_pico, freq, amplitude, P_sinal, P_ruido, snr_db
-
-# ---------------- Gerar sinal com diferentes períodos ----------------
-def gerar_x(n_periodos):
-    # Gera o sinal completo x = x1 + x2 com a duração pedida
-    t_ = np.arange(0, n_periodos / f1, 1 / fs)
-    x1_ = A1 * np.sin(2 * np.pi * f1 * t_)
-    rng_ = np.random.default_rng(seed=42)
-    x2_ = rng_.uniform(-A2, A2, size=t_.size)
-    return x1_ + x2_
+from utils import (
+    analisar,
+    atrasar,
+    autocorrelacao,
+    coef_correlacao,
+    correlacao,
+    covariancia,
+    desvio_padrao,
+    gerar_x,
+    media,
+    media_movel,
+    primeiro_lobulo,
+    quantizar,
+    variancia,
+)
 
 # ---------------- Amostragem ----------------
 ##### DEFINICAO DE DURAÇÃO DO SINAL EM PERÍODOS DA SENOIDE
@@ -237,7 +120,7 @@ lags_comp = np.arange(K_comp) / fs * 1000
 R_teorico = (A1 ** 2 / 2) * np.cos(2 * np.pi * f1 * lags_comp / 1000)   # gabarito
 
 for n_per in [4, 40, 400]:
-    R_ = autocorrelacao(gerar_x(n_per), K_comp)
+    R_ = autocorrelacao(gerar_x(n_per, f1, fs, A1, A2), K_comp)
     k_pico, freq, amp, Ps, Pn, snr = analisar(R_, fs)
     print(f"{n_per:4d} períodos -> pico em {k_pico:.1f} ms | f = {freq:.2f} Hz | "
           f"A = {amp:.3f} V ({2*amp:.2f} Vpp) | P_sinal = {Ps:.3f} V² | "
@@ -323,7 +206,7 @@ plt.savefig("autocorrelacao.png", dpi=150)
 # ---------------- Gráficos autocorrelacao  ----------------
 fig, axs = plt.subplots(3, 1, figsize=(10, 8), sharex=True, sharey=True)
 for ax, n_per in zip(axs, [4, 40, 400]):
-    x_ = gerar_x(n_per)
+    x_ = gerar_x(n_per, f1, fs, A1, A2)
     R_ = autocorrelacao(x_, K_comp)
     ax.plot(lags_comp, R_, color="tab:green", label="autocorrelação de x")
     ax.plot(lags_comp, R_teorico, color="tab:blue", linestyle="--", label="senoide pura (teórico)")
@@ -341,7 +224,7 @@ plt.savefig("autocorrelacao_4_40_400.png", dpi=150)
 # Obs.: media_movel e primeiro_lobulo já são chamadas dentro de analisar(),
 # mas lá os resultados intermediários (S, k_ini, k_fim) não são devolvidos.
 # Recalculo aqui só para poder plotá-los.
-R_400 = autocorrelacao(gerar_x(400), K_comp)
+R_400 = autocorrelacao(gerar_x(400, f1, fs, A1, A2), K_comp)
 # tamanho da janela da media movel deve ser igual ao definido em analisar() para que os resultados coincidam
 # tamanho da janel = 5
 S_400 = media_movel(R_400, 5)

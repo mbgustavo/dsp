@@ -1,10 +1,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from dsp_utils import convolucao, dft_amplitude, resposta_frequencia
+from utils import dft_amplitude, resposta_frequencia
+from shared import convolucao
 
-# ---------------- DFT passo a passo em uma frequência ----------------
 def dft_passo_a_passo(x, fs, f):
+    """Calcula passo a passo a correlação de x com seno e cosseno em f.
+
+    Parâmetros:
+        x: Sequência de amostras do sinal.
+        fs: Taxa de amostragem em Hz.
+        f: Frequência de referência em Hz.
+
+    Retorno:
+        Tupla com referências seno/cosseno, produtos, somas acumuladas e
+        amplitude estimada na frequência f.
+    """
     # Mesma conta da dft_amplitude, para UMA frequência f,
     # guardando os produtos e as somas acumuladas a cada amostra.
     N = len(x)
@@ -30,6 +41,18 @@ def dft_passo_a_passo(x, fs, f):
     return ref_cos, ref_sin, prod_cos, prod_sin, C_acum, D_acum, amplitude
 
 def grafico_dft(x, fs, f, n_zoom, arquivo):
+    """Gera e salva gráficos das etapas da análise DFT em uma frequência.
+
+    Parâmetros:
+        x: Sequência de amostras do sinal.
+        fs: Taxa de amostragem em Hz.
+        f: Frequência de referência em Hz.
+        n_zoom: Quantidade de amostras exibidas nos gráficos detalhados.
+        arquivo: Caminho do arquivo de imagem a salvar.
+
+    Retorno:
+        None. Salva a figura no caminho indicado.
+    """
     ref_cos, ref_sin, prod_cos, prod_sin, C_acum, D_acum, amp = dft_passo_a_passo(x, fs, f)
     n = np.arange(len(x))
     nz = n[:n_zoom]

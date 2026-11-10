@@ -1,20 +1,16 @@
 import numpy as np
- 
-# ---------------- Convolução ----------------
-def convolucao(x, h):
-    N = len(x)
-    M = len(h)
-    y = np.zeros(N + M - 1)              # tamanho da saída: N + M - 1
-    for n in range(N + M - 1):           # para cada instante da saída...
-        soma = 0.0
-        for k in range(M):               # ...percorre os coeficientes de h
-            if 0 <= n - k < N:           # só usa amostras de x que existem
-                soma = soma + h[k] * x[n - k]
-        y[n] = soma
-    return y
- 
-# ---------------- Correlação com uma senoide de frequência f ----------------
+
 def correlacao_freq(x, fs, f):
+    """Mede a magnitude da correlação de x com seno e cosseno na frequência f.
+
+    Parâmetros:
+        x: Sequência de amostras do sinal.
+        fs: Taxa de amostragem em Hz.
+        f: Frequência de referência em Hz.
+
+    Retorno:
+        Magnitude não normalizada da correlação, em unidades de x somadas.
+    """
     # Correlaciona x com um cosseno e um seno de frequência f
     # e junta os dois (Pitágoras), para não depender da fase.
     C = 0.0
@@ -25,8 +21,16 @@ def correlacao_freq(x, fs, f):
         D = D + x[n] * np.sin(angulo)
     return (C ** 2 + D ** 2) ** 0.5
  
-# ---------------- Espectro de um sinal (DFT) ----------------
 def dft_amplitude(x, fs):
+    """Calcula o espectro de amplitude nas frequências até Nyquist.
+
+    Parâmetros:
+        x: Sequência de amostras do sinal.
+        fs: Taxa de amostragem em Hz.
+
+    Retorno:
+        Tupla (freqs, amplitude) com frequências em Hz e amplitudes estimadas.
+    """
     # Testa as frequências k·fs/N, de 0 até Nyquist,
     # e divide por N/2 para obter a amplitude de cada senoide.
     N = len(x)
@@ -38,10 +42,17 @@ def dft_amplitude(x, fs):
         amplitude[k] = correlacao_freq(x, fs, freqs[k]) / (N / 2)
     return freqs, amplitude
  
-# ---------------- Resposta em frequência de um filtro ----------------
 def resposta_frequencia(h, fs, freqs):
-    # Testa as frequências pedidas, sem normalizar:
-    # o resultado é o GANHO do filtro em cada frequência.
+    """Calcula o ganho de um filtro nas frequências especificadas.
+
+    Parâmetros:
+        h: Coeficientes da resposta ao impulso do filtro.
+        fs: Taxa de amostragem em Hz.
+        freqs: Sequência das frequências de avaliação, em Hz.
+
+    Retorno:
+        Array NumPy com o ganho calculado para cada frequência.
+    """
     ganho = np.zeros(len(freqs))
     for i in range(len(freqs)):
         ganho[i] = correlacao_freq(h, fs, freqs[i])

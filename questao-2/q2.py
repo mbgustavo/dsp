@@ -1,24 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.set_printoptions(precision=3)
+from shared import convolucao
 
-# ---------------- Convolução ----------------
-def convolucao(x, h):
-    N = len(x)
-    M = len(h)
-    # entrada influe na saida ateh M-1 amostras depois
-    y = np.zeros(N + M - 1)              # tamanho da saída: N + M - 1
-    for n in range(N + M - 1):           # para cada instante da saída...
-        soma = 0.0
-        for k in range(M):               # ...percorre os coeficientes de h
-            # soh usa amostras de x que existem [0:32]
-            # no inicio descarta ultimas amostras de h que não tem correspondência em x pois seria no tempo negativo
-            # no final descarta primeiras amostras de h que não tem correspondência em x pois seria após o final do sinal de entrada
-            if 0 <= n - k < N:           
-                soma = soma + h[k] * x[n - k]
-        y[n] = soma
-    return y
+np.set_printoptions(precision=3)
 
 # ---------------- Sinal de entrada x(t) ----------------
 T = 1                          # período de amostragem
